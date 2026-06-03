@@ -190,8 +190,8 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <div class="section">
       <div class="section-title">HAND GESTURES</div>
       <div class="g-grid">
+        <div class="g-item"><div class="g-icon">✊</div><div class="g-text"><b>BOOTH</b>fist → 2s → 3 shots</div></div>
         <div class="g-item"><div class="g-icon">👍</div><div class="g-text"><b>SNAP</b>thumbs up</div></div>
-        <div class="g-item"><div class="g-icon">✌️</div><div class="g-text"><b>BOOTH</b>peace sign</div></div>
         <div class="g-item"><div class="g-icon">🖱️</div><div class="g-text"><b>DRAW</b>click & drag</div></div>
         <div class="g-item"><div class="g-icon">🖐️</div><div class="g-text"><b>CLEAR</b>open palm</div></div>
       </div>
@@ -366,8 +366,8 @@ function detectGesture(lm){
   const idx=fUp(lm,8,5),mid=fUp(lm,12,9),ring=fUp(lm,16,13),pink=fUp(lm,20,17);
   const thumbUp=lm[4].y<lm[3].y-15;
   if(idx&&mid&&ring&&pink)              return 'clear';
-  if(idx&&mid&&!ring&&!pink)            return 'booth';
   if(thumbUp&&!idx&&!mid&&!ring&&!pink) return 'snap';
+  if(!idx&&!mid&&!ring&&!pink&&!thumbUp) return 'fist';
   return 'idle';
 }
 function heldFor(name,ms=HOLD_MS){
@@ -379,9 +379,9 @@ function heldFor(name,ms=HOLD_MS){
 }
 function processGesture(lm){
   const g=detectGesture(lm);
-  ['snap','booth','clear'].forEach(n=>{if(g!==n)delete gestureHold[n];});
+  ['snap','fist','clear'].forEach(n=>{if(g!==n)delete gestureHold[n];});
   if(g==='snap'&&heldFor('snap')&&!boothRunning){ takeSnap(); showLabel('👍 SNAP!'); }
-  else if(g==='booth'&&heldFor('booth',800)&&!boothRunning){ startBooth(); showLabel('✌️ BOOTH!'); }
+  else if(g==='fist'&&heldFor('fist',400)&&!boothRunning){ startBooth(); showLabel('✊ BOOTH STARTING!'); }
   else if(g==='clear'&&heldFor('clear')){ dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); showLabel('🖐 CLEARED'); }
 }
 
@@ -415,14 +415,17 @@ function renderSlot(i,snap){
 async function startBooth(){
   if(boothRunning) return;
   boothRunning=true;
+  showLabel('✊ GET READY...');
   const btn=document.getElementById('boothBtn');
   btn.classList.add('recording'); btn.textContent='🔴 SHOOTING...';
   stripShots=[null,null,null];
   [0,1,2].forEach(i=>{document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`;});
+  await sleep(2000); // 2 second initial wait
   for(let i=0;i<3;i++){
-    await countdown(3); doFlash();
+    doFlash();
     stripShots[i]=captureFrame(); renderSlot(i,stripShots[i]);
-    await sleep(500);
+    showLabel('📸 '+(i+1)+' of 3');
+    await sleep(i<2 ? 800 : 300);
   }
   boothRunning=false; btn.classList.remove('recording'); btn.textContent='🎞 PHOTOBOOTH STRIP (3 shots)';
   showLabel('🎞 STRIP DONE!');
@@ -567,7 +570,8 @@ function downloadStrip(){
     else{ octx.fillStyle='#0a0a0a'; octx.fillRect(PAD,y,SW,SH); }
     if(theme.slotFrame) theme.slotFrame(octx,PAD,y,SW,SH);
   });
-  theme.footer(octx,W,H,HEADER+PAD+SH*3+GAP*2+PAD);
+  const footerY = HEADER+PAD+SH*3+GAP*2+PAD;
+  theme.footer(octx,W,H,footerY);
   const a=document.createElement('a'); a.href=out.toDataURL('image/png'); a.download=`facebooth-${curTheme}.png`; a.click();
 }
 
