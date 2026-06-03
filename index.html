@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FACE BOOTH</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<script src="vision_bundle.js"></script>
+
 <style>
 :root{
   --bg:#0d0d0d;--panel:#141414;--border:#2a2a2a;
@@ -234,7 +234,8 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
   </div>
 </div>
 
-<script>
+<script type="module">
+import { FaceLandmarker, HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
 // ═══════════════════════════════════════════════════════
 // GLOBALS
 // ═══════════════════════════════════════════════════════
@@ -315,7 +316,7 @@ function setAcc(a) {
 // MEDIAPIPE INIT
 // ═══════════════════════════════════════════════════════
 async function initMP() {
-  const { FaceLandmarker, HandLandmarker, FilesetResolver } = window.mediapipeTasksVision || window;
+  // FaceLandmarker, HandLandmarker, FilesetResolver loaded via import
 
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
