@@ -506,30 +506,6 @@ function drawStar(ctx,cx,cy,r,color){
   ctx.closePath(); ctx.fill(); ctx.restore();
 }
 
-function downloadStrip(){
-  const filled=stripShots.filter(Boolean);
-  if(!filled.length){alert('No shots yet!');return;}
-  const theme=THEMES[curTheme];
-  const SW=filled[0].width, SH=filled[0].height;
-  const PAD=theme.pad, GAP=theme.gap, HEADER=36, FOOTER=28;
-  const W=SW+PAD*2;
-  const H=SH*3+GAP*2+PAD*2+HEADER+FOOTER;
-  const out=document.createElement('canvas'); out.width=W; out.height=H;
-  const octx=out.getContext('2d');
-  octx.fillStyle=theme.bg; octx.fillRect(0,0,W,H);
-  theme.header(octx,W,HEADER);
-  stripShots.forEach((s,i)=>{
-    const y=HEADER+PAD+i*(SH+GAP);
-    if(s) octx.drawImage(s,PAD,y,SW,SH);
-    else{ octx.fillStyle='#0a0a0a'; octx.fillRect(PAD,y,SW,SH); }
-    if(theme.slotFrame) theme.slotFrame(octx,PAD,y,SW,SH);
-  });
-  const footerY = HEADER+PAD+SH*3+GAP*2+PAD;
-  theme.footer(octx,W,H,footerY);
-  const a=document.createElement('a'); a.href=out.toDataURL('image/png'); a.download=`facebooth-${curTheme}.png`; a.click();
-}
-
-// ── EXPOSE TO WINDOW ──────────────────────────────────
 window.setTheme=(t,btn)=>{
   curTheme=t;
   document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
