@@ -843,6 +843,16 @@ function clearStrip() {
   [0,1,2].forEach(i=>{ document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`; });
 }
 
+
+// ── Expose functions to window (required for type="module") ──
+window.setAcc    = setAcc;
+window.setBrush  = setBrush;
+window.setFilter = setFilter;
+window.takeSnap  = takeSnap;
+window.startBooth = startBooth;
+window.downloadStrip = downloadStrip;
+window.clearStrip = clearStrip;
+
 // ═══════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════
