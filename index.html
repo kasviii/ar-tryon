@@ -126,31 +126,23 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 
     <!-- STRIP THEMES -->
     <div class="section">
-      <div class="section-title">STRIP THEME</div>
+      <div class="section-title">STRIP TEMPLATE</div>
       <div class="theme-grid" id="themeGrid">
         <button class="theme-btn active" onclick="setTheme('film',this)">
-          <div class="theme-preview" style="background:#111;border:2px solid #333;">🎞</div>
-          <div class="theme-name">FILM</div>
+          <div class="theme-preview" style="background:#111;border:2px solid #333;font-size:11px;color:#888;">🎞 FILM</div>
+          <div class="theme-name">3 SHOTS</div>
         </button>
-        <button class="theme-btn" onclick="setTheme('retro',this)">
-          <div class="theme-preview" style="background:#fff5e0;border:3px solid #e63946;">⭐</div>
-          <div class="theme-name">RETRO</div>
-        </button>
-        <button class="theme-btn" onclick="setTheme('pink',this)">
-          <div class="theme-preview" style="background:#ffe0f0;border:3px solid #ff69b4;">🌸</div>
-          <div class="theme-name">BLOSSOM</div>
+        <button class="theme-btn" onclick="setTheme('purple',this)">
+          <div class="theme-preview" style="background:#e8d5f5;font-size:11px;color:#7b5ea7;">☁️ PURPLE</div>
+          <div class="theme-name">3 SHOTS</div>
         </button>
         <button class="theme-btn" onclick="setTheme('y2k',this)">
-          <div class="theme-preview" style="background:#c8f7ff;border:3px solid #7b2fff;">✨</div>
-          <div class="theme-name">Y2K</div>
+          <div class="theme-preview" style="background:#fce4e4;font-size:11px;color:#b06070;">🎮 Y2K</div>
+          <div class="theme-name">3 SHOTS</div>
         </button>
-        <button class="theme-btn" onclick="setTheme('dark',this)">
-          <div class="theme-preview" style="background:#000;border:2px solid #00ff88;">🖤</div>
-          <div class="theme-name">NOIR</div>
-        </button>
-        <button class="theme-btn" onclick="setTheme('sunset',this)">
-          <div class="theme-preview" style="background:linear-gradient(135deg,#ff6b35,#f7c59f);border:none;">🌅</div>
-          <div class="theme-name">SUNSET</div>
+        <button class="theme-btn" onclick="setTheme('floral',this)">
+          <div class="theme-preview" style="background:#fde8e0;font-size:11px;color:#b06060;">🌸 FLORAL</div>
+          <div class="theme-name">4 SHOTS</div>
         </button>
       </div>
     </div>
@@ -200,10 +192,11 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <!-- STRIP PREVIEW -->
     <div class="strip-wrap">
       <div class="strip-title">STRIP PREVIEW</div>
-      <div class="strip-slots">
+      <div class="strip-slots" id="stripSlots">
         <div class="strip-slot" id="slot0"><span class="slot-num">01</span></div>
         <div class="strip-slot" id="slot1"><span class="slot-num">02</span></div>
         <div class="strip-slot" id="slot2"><span class="slot-num">03</span></div>
+        <div class="strip-slot" id="slot3" style="display:none"><span class="slot-num">04</span></div>
       </div>
       <div class="strip-actions">
         <button class="dl-btn" onclick="downloadStrip()">↓ SAVE STRIP</button>
@@ -415,19 +408,24 @@ function renderSlot(i,snap){
 async function startBooth(){
   if(boothRunning) return;
   boothRunning=true;
+  const n = getShotCount();
   showLabel('✊ GET READY...');
   const btn=document.getElementById('boothBtn');
-  btn.classList.add('recording'); btn.textContent='🔴 SHOOTING...';
-  stripShots=[null,null,null];
-  [0,1,2].forEach(i=>{document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`;});
-  await sleep(2000); // 2 second initial wait
-  for(let i=0;i<3;i++){
+  btn.classList.add('recording'); btn.textContent=`🔴 SHOOTING ${n} SHOTS...`;
+  stripShots=Array(n).fill(null);
+  // show/hide slot 4
+  document.getElementById('slot3').style.display = n>=4 ? 'block' : 'none';
+  for(let i=0;i<n;i++){
+    document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`;
+  }
+  await sleep(2000);
+  for(let i=0;i<n;i++){
     doFlash();
     stripShots[i]=captureFrame(); renderSlot(i,stripShots[i]);
-    showLabel('📸 '+(i+1)+' of 3');
-    await sleep(i<2 ? 800 : 300);
+    showLabel(`📸 ${i+1} of ${n}`);
+    await sleep(i<n-1 ? 800 : 300);
   }
-  boothRunning=false; btn.classList.remove('recording'); btn.textContent='🎞 PHOTOBOOTH STRIP (3 shots)';
+  boothRunning=false; btn.classList.remove('recording'); btn.textContent=`🎞 PHOTOBOOTH STRIP (${n} shots)`;
   showLabel('🎞 STRIP DONE!');
 }
 
@@ -439,112 +437,68 @@ function countdown(from){
 }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-// ── STRIP THEMES ──────────────────────────────────────
-const THEMES = {
-  film:{
-    bg:'#111', slotBorder:'#333', pad:10, gap:6,
-    header:(ctx,W,y)=>{
-      ctx.fillStyle='#333'; ctx.fillRect(0,0,W,y);
-      // film holes
-      for(let x=8;x<W;x+=20){ ctx.fillStyle='#111'; ctx.beginPath(); ctx.roundRect(x,4,10,y-8,2); ctx.fill(); }
-    },
-    footer:(ctx,W,H,y)=>{
-      ctx.fillStyle='#333'; ctx.fillRect(0,y,W,H-y);
-      for(let x=8;x<W;x+=20){ ctx.fillStyle='#111'; ctx.beginPath(); ctx.roundRect(x,y+4,10,H-y-8,2); ctx.fill(); }
-      ctx.fillStyle='#888'; ctx.font='bold 11px "Syne Mono",monospace'; ctx.textAlign='center';
-      ctx.fillText('FACE BOOTH  ★  '+new Date().toLocaleDateString(), W/2, H-6);
-    },
-    slotFrame:null
-  },
-  retro:{
-    bg:'#fff5e0', slotBorder:'#e63946', pad:14, gap:8,
-    header:(ctx,W,y)=>{
-      ctx.fillStyle='#e63946'; ctx.fillRect(0,0,W,y);
-      ctx.fillStyle='#fff5e0'; ctx.font='bold 16px "Syne",sans-serif'; ctx.textAlign='center';
-      ctx.fillText('★ FACE BOOTH ★', W/2, y-6);
-      // stars
-      [[10,10],[W-10,10],[10,y-4],[W-10,y-4]].forEach(([x,yy])=>drawStar(ctx,x,yy,6,'#ffe94d'));
-    },
-    footer:(ctx,W,H,y)=>{
-      ctx.fillStyle='#e63946'; ctx.fillRect(0,y,W,H-y);
-      ctx.fillStyle='#fff5e0'; ctx.font='12px "Syne Mono",monospace'; ctx.textAlign='center';
-      ctx.fillText(new Date().toLocaleDateString(), W/2, H-6);
-      [[10,H-10],[W-10,H-10]].forEach(([x,yy])=>drawStar(ctx,x,yy,5,'#ffe94d'));
-    },
-    slotFrame:(ctx,x,y,w,h)=>{ ctx.strokeStyle='#e63946'; ctx.lineWidth=3; ctx.strokeRect(x-1,y-1,w+2,h+2); }
-  },
-  pink:{
-    bg:'#ffe0f0', slotBorder:'#ff69b4', pad:12, gap:7,
-    header:(ctx,W,y)=>{
-      // gradient header
-      const g=ctx.createLinearGradient(0,0,W,0);
-      g.addColorStop(0,'#ff69b4'); g.addColorStop(1,'#ffb3d9');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,y);
-      ctx.fillStyle='#fff'; ctx.font='bold 15px "Syne",sans-serif'; ctx.textAlign='center';
-      ctx.fillText('🌸 FACE BOOTH 🌸', W/2, y-6);
-    },
-    footer:(ctx,W,H,y)=>{
-      const g=ctx.createLinearGradient(0,0,W,0);
-      g.addColorStop(0,'#ff69b4'); g.addColorStop(1,'#ffb3d9');
-      ctx.fillStyle=g; ctx.fillRect(0,y,W,H-y);
-      ctx.fillStyle='#fff'; ctx.font='11px "Syne Mono",monospace'; ctx.textAlign='center';
-      ctx.fillText('💕 '+new Date().toLocaleDateString()+' 💕', W/2, H-6);
-    },
-    slotFrame:(ctx,x,y,w,h)=>{ ctx.strokeStyle='#ff69b4'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.strokeRect(x-1,y-1,w+2,h+2); ctx.setLineDash([]); }
-  },
-  y2k:{
-    bg:'#c8f7ff', slotBorder:'#7b2fff', pad:14, gap:8,
-    header:(ctx,W,y)=>{
-      const g=ctx.createLinearGradient(0,0,W,y);
-      g.addColorStop(0,'#7b2fff'); g.addColorStop(1,'#00d4ff');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,y);
-      ctx.fillStyle='#fff'; ctx.font='bold 15px "Syne",sans-serif'; ctx.textAlign='center';
-      ctx.fillText('✨ FACE BOOTH ✨', W/2, y-6);
-    },
-    footer:(ctx,W,H,y)=>{
-      const g=ctx.createLinearGradient(0,0,W,0);
-      g.addColorStop(0,'#ff6fff'); g.addColorStop(1,'#7b2fff');
-      ctx.fillStyle=g; ctx.fillRect(0,y,W,H-y);
-      ctx.fillStyle='#fff'; ctx.font='11px "Syne Mono",monospace'; ctx.textAlign='center';
-      ctx.fillText('Y2K FOREVER  '+new Date().toLocaleDateString(), W/2, H-6);
-    },
-    slotFrame:(ctx,x,y,w,h)=>{ ctx.strokeStyle='#7b2fff'; ctx.lineWidth=3; ctx.shadowColor='#ff6fff'; ctx.shadowBlur=8; ctx.strokeRect(x,y,w,h); ctx.shadowBlur=0; }
-  },
-  dark:{
-    bg:'#000', slotBorder:'#00ff88', pad:10, gap:6,
-    header:(ctx,W,y)=>{
-      ctx.fillStyle='#000'; ctx.fillRect(0,0,W,y);
-      ctx.strokeStyle='#00ff88'; ctx.lineWidth=1; ctx.strokeRect(4,4,W-8,y-4);
-      ctx.fillStyle='#00ff88'; ctx.font='bold 13px "Syne Mono",monospace'; ctx.textAlign='center';
-      ctx.fillText('[ FACE BOOTH ]', W/2, y-7);
-    },
-    footer:(ctx,W,H,y)=>{
-      ctx.fillStyle='#000'; ctx.fillRect(0,y,W,H-y);
-      ctx.strokeStyle='#00ff88'; ctx.lineWidth=1; ctx.strokeRect(4,y+2,W-8,H-y-6);
-      ctx.fillStyle='#555'; ctx.font='10px "Syne Mono",monospace'; ctx.textAlign='center';
-      ctx.fillText(new Date().toLocaleDateString(), W/2, H-6);
-    },
-    slotFrame:(ctx,x,y,w,h)=>{ ctx.strokeStyle='#00ff88'; ctx.lineWidth=1; ctx.strokeRect(x-1,y-1,w+2,h+2); }
-  },
-  sunset:{
-    bg:'#1a0a00', slotBorder:'#ff6b35', pad:12, gap:7,
-    header:(ctx,W,y)=>{
-      const g=ctx.createLinearGradient(0,0,W,y);
-      g.addColorStop(0,'#ff3c00'); g.addColorStop(1,'#ff9500');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,y);
-      ctx.fillStyle='#fff'; ctx.font='bold 14px "Syne",sans-serif'; ctx.textAlign='center';
-      ctx.fillText('🌅 FACE BOOTH', W/2, y-6);
-    },
-    footer:(ctx,W,H,y)=>{
-      const g=ctx.createLinearGradient(0,0,W,0);
-      g.addColorStop(0,'#ff3c00'); g.addColorStop(1,'#ff9500');
-      ctx.fillStyle=g; ctx.fillRect(0,y,W,H-y);
-      ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font='10px "Syne Mono",monospace'; ctx.textAlign='center';
-      ctx.fillText(new Date().toLocaleDateString(), W/2, H-6);
-    },
-    slotFrame:(ctx,x,y,w,h)=>{ const g=ctx.createLinearGradient(x,y,x+w,y+h); g.addColorStop(0,'#ff3c00'); g.addColorStop(1,'#ff9500'); ctx.strokeStyle=g; ctx.lineWidth=2; ctx.strokeRect(x-1,y-1,w+2,h+2); }
-  }
+// ── STRIP TEMPLATES ──────────────────────────────────
+// Slot coords: [x, y, w, h] as fractions of template image size
+const TEMPLATES = {
+  film:   { file:'frames/Black_and_White_Film_Frame_Photo_Collage_Instagram_Post.png',   shots:3, W:1080, H:1080,
+            slots:[ [39,0,502,635], [39,441,502,194], [39,676,502,404] ] },
+  purple: { file:'frames/Purple_Cute_Today_s_Special_Photostrip.png', shots:3, W:591, H:1772,
+            slots:[ [30,30,531,385], [30,561,531,323], [30,986,531,408] ] },
+  y2k:    { file:'frames/Pink_and_Green_Playful_Photo_Strip_Design.png', shots:3, W:707, H:2000,
+            slots:[ [54,217,599,407], [54,789,599,411], [54,1380,599,400] ] },
+  floral: { file:'frames/Beige_and_White_Aesthetic_Flower_Girl_Friends_Photobox_Photo_Strip.png', shots:4, W:591, H:1772,
+            slots:[ [30,88,531,294], [30,482,531,287], [30,869,531,289], [30,1256,531,287] ] }
 };
+
+function getShotCount(){ return TEMPLATES[curTheme]?.shots || 3; }
+
+async function downloadStrip(){
+  const tmpl = TEMPLATES[curTheme];
+  const filled = stripShots.filter(Boolean);
+  if(!filled.length){ alert('No shots yet!'); return; }
+
+  // Load template image
+  const tImg = await loadImage(tmpl.file);
+  const TW = tmpl.W, TH = tmpl.H;
+
+  const out = document.createElement('canvas');
+  out.width = TW; out.height = TH;
+  const octx = out.getContext('2d');
+
+  // Draw white base
+  octx.fillStyle = '#fff';
+  octx.fillRect(0,0,TW,TH);
+
+  // Place photos into slots
+  tmpl.slots.forEach(([sx,sy,sw,sh], i) => {
+    const shot = stripShots[i];
+    if(!shot) return;
+    octx.save();
+    octx.beginPath();
+    octx.rect(sx, sy, sw, sh);
+    octx.clip();
+    // fit photo covering the slot (center crop)
+    const shotAR = shot.width / shot.height;
+    const slotAR = sw / sh;
+    let dw, dh, dx, dy;
+    if(shotAR > slotAR){ dh=sh; dw=sh*shotAR; dx=sx-(dw-sw)/2; dy=sy; }
+    else { dw=sw; dh=sw/shotAR; dx=sx; dy=sy-(dh-sh)/2; }
+    octx.drawImage(shot, dx, dy, dw, dh);
+    octx.restore();
+  });
+
+  // Draw template on top
+  octx.drawImage(tImg, 0, 0, TW, TH);
+
+  const a = document.createElement('a');
+  a.href = out.toDataURL('image/png');
+  a.download = `facebooth-${curTheme}.png`;
+  a.click();
+}
+
+function loadImage(src){
+  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; });
+}
 
 function drawStar(ctx,cx,cy,r,color){
   ctx.save(); ctx.translate(cx,cy); ctx.fillStyle=color; ctx.beginPath();
@@ -580,6 +534,9 @@ window.setTheme=(t,btn)=>{
   curTheme=t;
   document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const n=getShotCount();
+  document.getElementById('boothBtn').textContent=`🎞 PHOTOBOOTH STRIP (${n} shots)`;
+  document.getElementById('slot3').style.display = n>=4 ? 'block' : 'none';
 };
 window.setBrush=(s,btn)=>{
   brushSize=s;
@@ -595,7 +552,7 @@ window.clearDraw=()=>dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
 window.takeSnap=takeSnap;
 window.startBooth=startBooth;
 window.downloadStrip=downloadStrip;
-window.clearStrip=()=>{ stripShots=[null,null,null]; [0,1,2].forEach(i=>{document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`;}); };
+window.clearStrip=()=>{ const n=getShotCount(); stripShots=Array(n).fill(null); for(let i=0;i<4;i++){const el=document.getElementById(`slot${i}`);if(i<n){el.style.display='block';el.innerHTML=`<span class="slot-num">0${i+1}</span>`;}else{el.style.display='none';}} };
 
 // ── BOOT ──────────────────────────────────────────────
 initMP().catch(e=>{ document.getElementById('statusTxt').textContent='LOAD FAILED'; console.error(e); });
