@@ -357,10 +357,17 @@ function drawSkeleton(pts){
 function fUp(lm,tip,mcp){return lm[tip].y<lm[mcp].y;}
 function detectGesture(lm){
   const idx=fUp(lm,8,5),mid=fUp(lm,12,9),ring=fUp(lm,16,13),pink=fUp(lm,20,17);
-  const thumbUp=lm[4].y<lm[3].y-15;
+  const thumbUp=lm[4].y<lm[3].y-20;
+  // clear: all 4 fingers clearly up
   if(idx&&mid&&ring&&pink)              return 'clear';
+  // snap: thumb clearly up, all others clearly down
   if(thumbUp&&!idx&&!mid&&!ring&&!pink) return 'snap';
-  if(!idx&&!mid&&!ring&&!pink&&!thumbUp) return 'fist';
+  // fist: ALL fingers curled (tips below knuckles by margin)
+  const idxDown = lm[8].y > lm[6].y+10;
+  const midDown = lm[12].y > lm[10].y+10;
+  const ringDown = lm[16].y > lm[14].y+10;
+  const pinkDown = lm[20].y > lm[18].y+10;
+  if(idxDown&&midDown&&ringDown&&pinkDown&&!thumbUp) return 'fist';
   return 'idle';
 }
 function heldFor(name,ms=HOLD_MS){
@@ -374,7 +381,7 @@ function processGesture(lm){
   const g=detectGesture(lm);
   ['snap','fist','clear'].forEach(n=>{if(g!==n)delete gestureHold[n];});
   if(g==='snap'&&heldFor('snap')&&!boothRunning){ takeSnap(); showLabel('👍 SNAP!'); }
-  else if(g==='fist'&&heldFor('fist',400)&&!boothRunning){ startBooth(); showLabel('✊ BOOTH STARTING!'); }
+  else if(g==='fist'&&heldFor('fist',800)&&!boothRunning){ startBooth(); showLabel('✊ BOOTH STARTING!'); }
   else if(g==='clear'&&heldFor('clear')){ dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); showLabel('🖐 CLEARED'); }
 }
 
@@ -418,7 +425,12 @@ async function startBooth(){
   for(let i=0;i<n;i++){
     document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`;
   }
-  await sleep(2000);
+  // countdown 3..2..1 during 2s wait
+  for(let c=3;c>0;c--){
+    cdEl.textContent=c; cdEl.classList.add('show');
+    await sleep(700);
+  }
+  cdEl.classList.remove('show');
   for(let i=0;i<n;i++){
     doFlash();
     stripShots[i]=captureFrame(); renderSlot(i,stripShots[i]);
@@ -490,14 +502,25 @@ async function downloadStrip(){
   // Draw template on top
   octx.drawImage(tImg, 0, 0, TW, TH);
 
-  const a = document.createElement('a');
-  a.href = out.toDataURL('image/png');
-  a.download = `facebooth-${curTheme}.png`;
-  a.click();
+  try {
+    const a = document.createElement('a');
+    a.href = out.toDataURL('image/png');
+    a.download = `facebooth-${curTheme}.png`;
+    a.click();
+  } catch(e) {
+    console.error('Download failed:', e);
+    alert('Download failed — try a different browser or check console.');
+  }
 }
 
 function loadImage(src){
-  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; });
+  return new Promise((res,rej)=>{
+    const i=new Image();
+    i.crossOrigin='anonymous';
+    i.onload=()=>res(i);
+    i.onerror=(e)=>{ console.error('Failed to load:',src,e); rej(e); };
+    i.src=src+'?v=1';
+  });
 }
 
 function drawStar(ctx,cx,cy,r,color){
