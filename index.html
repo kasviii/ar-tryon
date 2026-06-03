@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FACE BOOTH</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
+<script src="vision_bundle.js"></script>
 <style>
 :root{
   --bg:#0d0d0d;--panel:#141414;--border:#2a2a2a;
@@ -318,7 +318,7 @@ async function initMP() {
   const { FaceLandmarker, HandLandmarker, FilesetResolver } = window.mediapipeTasksVision || window;
 
   const vision = await FilesetResolver.forVisionTasks(
-    "https://unpkg.com/@mediapipe/tasks-vision@0.10.14/wasm"
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
   );
 
   faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
