@@ -449,17 +449,18 @@ async function startBooth(){
   for(let i=0;i<n;i++){
     document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`;
   }
+  // single 3..2..1 then rapid shots
+  for(let c=3;c>0;c--){
+    cdEl.textContent=c; cdEl.classList.add('show');
+    await sleep(900);
+  }
+  cdEl.classList.remove('show');
+  await sleep(200);
   for(let i=0;i<n;i++){
-    // mini countdown before each shot
-    for(let c=3;c>0;c--){
-      cdEl.textContent=c; cdEl.classList.add('show');
-      await sleep(700);
-    }
-    cdEl.classList.remove('show');
     doFlash();
     stripShots[i]=captureFrame(); renderSlot(i,stripShots[i]);
     showLabel(`📸 ${i+1} of ${n}`);
-    await sleep(400);
+    await sleep(600);
   }
   boothRunning=false; btn.classList.remove('recording'); btn.textContent=`🎞 PHOTOBOOTH STRIP (${n} shots)`;
   showLabel('🎞 STRIP DONE!');
