@@ -395,9 +395,19 @@ function heldFor(name,ms=HOLD_MS){
 function processGesture(lm){
   const g=detectGesture(lm);
   ['snap','fist','clear'].forEach(n=>{if(g!==n)delete gestureHold[n];});
-  if(g==='snap'&&heldFor('snap')&&!boothRunning){ takeSnap(); showLabel('👍 SNAP!'); }
-  else if(g==='fist'&&heldFor('fist',800)&&!boothRunning){ startBooth(); showLabel('✊ BOOTH STARTING!'); }
-  else if(g==='clear'&&heldFor('clear')){ dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); showLabel('🖐 CLEARED'); }
+  // snap needs 600ms hold to avoid accidental trigger during fist formation
+  if(g==='snap'&&heldFor('snap',600)&&!boothRunning){ takeSnap(); showLabel('👍 SNAP!'); }
+  // fist needs 1000ms hold — show visual feedback while holding
+  else if(g==='fist'&&!boothRunning){
+    if(!gestureHold['fist']) gestureHold['fist']={start:Date.now(),fired:false};
+    const held = Date.now()-gestureHold['fist'].start;
+    if(!gestureHold['fist'].fired){
+      // show progress
+      if(held>200) showLabel('✊ HOLD... '+(Math.min(100,Math.floor(held/10)))+'%');
+      if(held>=1000){ gestureHold['fist'].fired=true; startBooth(); }
+    }
+  }
+  else if(g==='clear'&&heldFor('clear',800)){ dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height); showLabel('🖐 CLEARED'); }
 }
 
 let glT;
