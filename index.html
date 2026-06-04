@@ -393,16 +393,15 @@ function heldFor(name,ms=HOLD_MS){
   return false;
 }
 function processGesture(lm){
+  // don't process gestures while booth is running — let user pose freely
+  if(boothRunning) return;
   const g=detectGesture(lm);
   ['snap','fist','clear'].forEach(n=>{if(g!==n)delete gestureHold[n];});
-  // snap needs 600ms hold to avoid accidental trigger during fist formation
-  if(g==='snap'&&heldFor('snap',600)&&!boothRunning){ takeSnap(); showLabel('👍 SNAP!'); }
-  // fist needs 1000ms hold — show visual feedback while holding
-  else if(g==='fist'&&!boothRunning){
+  if(g==='snap'&&heldFor('snap',600)){ takeSnap(); showLabel('👍 SNAP!'); }
+  else if(g==='fist'){
     if(!gestureHold['fist']) gestureHold['fist']={start:Date.now(),fired:false};
     const held = Date.now()-gestureHold['fist'].start;
     if(!gestureHold['fist'].fired){
-      // show progress
       if(held>200) showLabel('✊ HOLD... '+(Math.min(100,Math.floor(held/10)))+'%');
       if(held>=1000){ gestureHold['fist'].fired=true; startBooth(); }
     }
@@ -450,17 +449,17 @@ async function startBooth(){
   for(let i=0;i<n;i++){
     document.getElementById(`slot${i}`).innerHTML=`<span class="slot-num">0${i+1}</span>`;
   }
-  // countdown 3..2..1 during 2s wait
-  for(let c=3;c>0;c--){
-    cdEl.textContent=c; cdEl.classList.add('show');
-    await sleep(700);
-  }
-  cdEl.classList.remove('show');
   for(let i=0;i<n;i++){
+    // mini countdown before each shot
+    for(let c=3;c>0;c--){
+      cdEl.textContent=c; cdEl.classList.add('show');
+      await sleep(700);
+    }
+    cdEl.classList.remove('show');
     doFlash();
     stripShots[i]=captureFrame(); renderSlot(i,stripShots[i]);
     showLabel(`📸 ${i+1} of ${n}`);
-    await sleep(i<n-1 ? 800 : 300);
+    await sleep(400);
   }
   boothRunning=false; btn.classList.remove('recording'); btn.textContent=`🎞 PHOTOBOOTH STRIP (${n} shots)`;
   showLabel('🎞 STRIP DONE!');
