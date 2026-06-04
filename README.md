@@ -2,7 +2,7 @@
 
 A browser-based AR photobooth app. Draw on your live camera feed, apply filters, and capture photo strips — all running directly in the browser with no installs needed.
 
-**Live demo:** `https://kasviii.github.io/ar-tryon`"https://kasviii.github.io/ar-tryon"
+**Live demo:** https://kasviii.github.io/ar-tryon
 
 ---
 
